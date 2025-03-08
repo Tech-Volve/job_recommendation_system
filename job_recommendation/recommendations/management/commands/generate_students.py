@@ -7,8 +7,16 @@ from recommendations.models import Student  # Import the Student model
 # Initialize Faker
 fake = Faker()
 
-# List of possible courses
-courses = ['Math', 'History', 'Physics', 'Chemistry', 'Biology', 'English', 'Geography']
+courses = [
+    'Programming Fundamentals', 'Data Structures', 'Algorithms', 'Database Systems', 
+    'Operating Systems', 'Computer Networks', 'Software Engineering', 
+    'Artificial Intelligence', 'Machine Learning', 'Computer Vision', 
+    'Cybersecurity', 'Cloud Computing', 'Mobile App Development', 
+    'Web Development', 'Blockchain Technology', 'Big Data Analytics', 
+    'Internet of Things (IoT)', 'Computer Graphics', 'Parallel Computing',
+    'Human-Computer Interaction'
+]
+
 
 # List of possible skills and career aspirations
 skills_list = ['Python', 'Java', 'C++', 'Data Analysis', 'Machine Learning', 'AI', 'Web Development', 'Software Engineering']
