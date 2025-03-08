@@ -21,7 +21,7 @@
             event.preventDefault();
             let studentId = document.getElementById("student_id").value;
 
-            fetch(`/get-recommendations/${studentId}/`)
+            fetch(`/recommendations/${studentId}/`)
                 .then(response => response.json())
                 .then(data => {
                     let recommendationsList = document.getElementById("recommendations-list");

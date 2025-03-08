@@ -10,7 +10,9 @@ def get_recommendations(request, student_id):
     return JsonResponse({"student_id": student_id, "recommended_jobs": recommendations})
 
 
-
+def recommendation_page(request):
+    """ Renders the page where students enter their ID """
+    return render(request, 'recommend.html')
 
 def home(request):
     return render(request, 'home.html')
