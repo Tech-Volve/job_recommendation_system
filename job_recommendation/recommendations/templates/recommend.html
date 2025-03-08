@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Recommendation</title>
+</head>
+<body>
+    <h2>Enter Your Student ID</h2>
+    <form id="recommendation-form">
+        <label for="student_id">Student ID:</label>
+        <input type="text" id="student_id" name="student_id" required>
+        <button type="submit">Get Recommendations</button>
+    </form>
+
+    <h3>Recommended Jobs:</h3>
+    <ul id="recommendations-list"></ul>
+
+    <script>
+        document.getElementById("recommendation-form").addEventListener("submit", function(event) {
+            event.preventDefault();
+            let studentId = document.getElementById("student_id").value;
+
+            fetch(`/get-recommendations/${studentId}/`)
+                .then(response => response.json())
+                .then(data => {
+                    let recommendationsList = document.getElementById("recommendations-list");
+                    recommendationsList.innerHTML = "";
+                    
+                    data.recommended_jobs.forEach(job => {
+                        let li = document.createElement("li");
+                        li.textContent = job;
+                        recommendationsList.appendChild(li);
+                    });
+                })
+                .catch(error => console.error("Error fetching recommendations:", error));
+        });
+    </script>
+</body>
+</html>
