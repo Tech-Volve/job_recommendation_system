@@ -3,7 +3,7 @@ from django.db import models
 class Student(models.Model):
     name = models.CharField(max_length=255)
     student_id = models.CharField(max_length=50, unique=True)
-    grades = models.JSONField()  # Store subjects and grades as JSON
+    grades = models.JSONField(default=dict)  # Store subjects and grades as JSON
     interests = models.TextField(blank=True, null=True)
     skills = models.TextField(blank=True, null=True)
 
