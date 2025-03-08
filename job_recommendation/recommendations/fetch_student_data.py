@@ -23,4 +23,4 @@ def fetch_and_store_student_data():
     
     print("Student data imported successfully.")
 
-# Run this function inside the Django shell
+
