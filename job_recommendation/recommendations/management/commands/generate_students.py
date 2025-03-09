@@ -56,5 +56,4 @@ class Command(BaseCommand):
 
         # Bulk insert all students
         Student.objects.bulk_create(students)
-
         self.stdout.write(self.style.SUCCESS(f"Successfully created {num_students} students!"))

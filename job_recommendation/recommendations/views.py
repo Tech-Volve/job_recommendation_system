@@ -31,3 +31,6 @@ def org_login(request):
 
 def org_dashboard(request):
     return render (request, 'org/org-dashboard.html')
+
+def user_dashboard(request):
+    return render (request, 'dashboard.html')
