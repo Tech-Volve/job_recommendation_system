@@ -28,3 +28,6 @@ def org_signup(request):
 
 def org_login(request):
     return render (request, 'org/login_organization.html')
+
+def org_dashboard(request):
+    return render (request, 'org/dashboard.html')

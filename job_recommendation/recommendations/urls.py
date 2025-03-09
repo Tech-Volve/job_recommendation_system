@@ -10,5 +10,6 @@ urlpatterns = [
     # path('logout/', views.logout, name='logout'),
     path('org/signup/', views.org_signup, name='org_signup'),
     path('org/login/', views.org_login, name='org_login'),
+    path('org/dashboard/', views.org_dashboard, name='org_dashboard'),
     
 ]
