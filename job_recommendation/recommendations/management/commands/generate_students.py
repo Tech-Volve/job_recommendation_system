@@ -2,7 +2,7 @@ import random
 import json
 from django.core.management.base import BaseCommand
 from faker import Faker
-from recommendations.models import Student  # Import the Student model
+from recommendations.models import Student  
 
 # Initialize Faker
 fake = Faker()
@@ -25,7 +25,7 @@ career_goals = ['Software Engineer', 'Data Scientist', 'Product Manager', 'Resea
 # Function to generate random grades
 def generate_grades():
     grades = {course: random.choice(['A', 'B', 'C', 'D', 'F']) for course in courses}
-    return json.dumps(grades)  # Store as JSON
+    return json.dumps(grades) 
 
 # Function to generate random extracurricular activities
 def generate_extracurricular_activities():
@@ -41,7 +41,7 @@ class Command(BaseCommand):
     help = "Generate dummy student data"
 
     def handle(self, *args, **kwargs):
-        num_students = 100  # Adjust this number as needed
+        num_students = 100  
 
         students = []
         for _ in range(num_students):
@@ -49,7 +49,7 @@ class Command(BaseCommand):
                 name=fake.name(),
                 student_id=fake.unique.random_number(digits=6),
                 grades=generate_grades(),
-                skills=', '.join(random.sample(skills_list, k=3)),  # Store as comma-separated string
+                skills=', '.join(random.sample(skills_list, k=3)),  
                 interests=random.choice(['Software Development', 'Data Science', 'Engineering']),
             )
             students.append(student)
