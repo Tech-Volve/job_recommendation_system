@@ -1,9 +1,10 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="./css/index.css">
+    <link rel="stylesheet" href="{% static 'css/index.css' %}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <title>KoraQuest</title>
 </head>
@@ -26,16 +27,16 @@
             <p class="market">Join over <span class="bolding">2000</span> talents and <span class="bolding">500+</span> organization already using <span class="blue bolding">Kora</span><span class="bolding">Quest</span></p>
         </div>
         <div class="companies">
-            <img src="./images/tech-volve-high-resolution-logo-transparent.png">
-            <img src="./images/Alu-logo-blue.webp">
-            <img src="./images/wiredin.png">
-            <img src="./images/bk.jpg">
-            <img src="./images/vuba.png">
+            <img src="{% static 'images/tech-volve-high-resolution-logo-transparent.png' %}">
+            <img src="{% static 'images/Alu-logo-blue.webp' %}">
+            <img src="{% static 'images/wiredin.png' %}">
+            <img src="{% static 'images/bk.jpg' %}">
+            <img src="{% static 'images/vuba.png' %}">
         </div>
     </section>
     <section class="talents">
         <div class="nice_picture">
-            <img src="./images/smilling_black_guy-removebg-preview.png">
+            <img src="{% static 'images/smilling_black_guy-removebg-preview.png' %}">
             <div class="info_boxes">
                 <div class="ibox1"></div>
                 <div class="ibox2"></div>
@@ -62,7 +63,7 @@
         <p>
             What is <span class="blue">Kora</span>Quest for Organizations?
         </p>
-        <img src="./images/business_lady-removebg-preview.png">
+        <img src="{% static 'images/business_lady-removebg-preview.png' %}">
         <div class="org_boxes">
             <div class="boxx3">
                 <div class="org_box1">

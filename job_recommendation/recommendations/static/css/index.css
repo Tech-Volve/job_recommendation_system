@@ -1,0 +1,414 @@
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    font-family: 'inter', sans-serif;
+    background-color: #E9FCFF;
+    overflow-x: hidden;
+}
+
+.welcome_page {
+    margin: 0;
+    height: 100vh;
+    width: 100vw;
+}
+
+nav {
+    position: fixed;
+    background-color: black;
+    color: white;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding: 5px 20px;
+    border-radius: 10px;
+    width: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 1000; /* Ensure the nav is in front of other elements */
+}
+
+nav .Sign {
+    background-color: blue;
+    padding: calc(10px - 2px) 20px;
+    border-radius: 5px;
+}
+
+nav p {
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+nav p:hover {
+    font-size: 18px;
+}
+
+.welcome_page {
+    background-color: #E9FCFF;
+}
+
+.welcome_page h2 {
+    color: blue;
+    font-size: 40px;
+    position: relative;
+    left: 2%;
+}
+
+.welcome_page h2 span {
+    color: black;
+}
+
+.Welcome {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+    margin-top: 10%;
+}
+
+.Welcome h1 {
+    font-size: 50px;
+    color: black;
+}
+
+.Welcome p {
+    font-size: 20px;
+    color: black;
+}
+
+.Welcome .but {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    gap: 30px;
+}
+
+.Welcome .but button {
+    color: white;
+    border-color: none;
+    padding: 15px 25px;
+    font-size: 15px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+}
+
+.Welcome .but .button1 {
+    background-color: #9C00FE;
+    border-color: transparent;
+    border-radius: 25px;
+}
+.Welcome .but .button1:hover{
+    background-color: #6d08ab;
+}
+
+.Welcome .but .button2 {
+    background-color: blue;
+    border-color: transparent;
+    border-radius: 25px;
+}
+.Welcome .but .button2:hover{
+    background-color: #0a0a82;
+}
+
+.Welcome .market {
+    font-size: 30px;
+}
+
+.Welcome .market .bolding {
+    font-weight: 600;
+}
+
+.Welcome .market .blue {
+    color: blue;
+}
+
+.companies {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+}
+
+.companies img {
+    height: 80px;
+    margin: 0 20px;
+}
+
+/* Section 2 */
+.talents {
+    height: 100vh;
+    display: flex;
+    background-color: white;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+}
+
+.talents p {
+    font-size: 30px;
+    color: black;
+    font-weight: 600;
+}
+
+.part2 {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.talents .part2 .blue {
+    color: blue;
+}
+
+.talents .part2 .centerize {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 20px;
+}
+
+.talents .part2 .boxes {
+    width: 500px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    gap: 20px;
+}
+
+.talents .for_talents .part2 .boxes .boxx1 {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+a{
+    text-decoration: none;
+    color: white;
+}
+
+.box1 {
+    background-color: blue;
+    height: 100px;
+    width: 100%;
+    padding: 50px 30px;
+    border-radius: 20px;
+}
+
+.box2 {
+    background-color: rgb(234, 35, 234);
+    height: 100px;
+    width: 100%;
+    padding: 50px 30px;
+    border-radius: 20px;
+}
+
+.talents .for_talents .part2 .boxes .boxx2 {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+}
+
+.box3 {
+    background-color: rgb(16, 247, 16);
+    height: 100px;
+    width: 100%;
+    padding: 50px 30px;
+    border-radius: 20px;
+}
+
+.box4 {
+    background-color: orange;
+    height: 100px;
+    width: 100%;
+    padding: 50px 30px;
+    border-radius: 20px;
+}
+
+.talents .nice_picture {
+    position: relative;
+    display: flex;
+}
+
+.talents .nice_picture .info_boxes {
+    display: flex;
+    position: absolute;
+    height: 490px;
+    width: 100%;
+}
+
+.talents .nice_picture .info_boxes .ibox1 {
+    background-color: blueviolet;
+    width: 200px;
+    height: 160px;
+    display: flex;
+    top: 0;
+    border-radius: 10px;
+}
+
+.talents .nice_picture .info_boxes .ibox2 {
+    position: absolute;
+    background-color: rgb(248, 6, 123);
+    width: 200px;
+    height: 160px;
+    display: flex;
+    bottom: 0;
+    left: 50%;
+    border-radius: 10px;
+}
+
+/* Section 3 Organizations */
+.organizations {
+    position: relative;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.organizations p {
+    font-size: 30px;
+    position: absolute;
+    top: 100px;
+    color: black;
+    font-weight: 600;
+}
+
+.organizations .blue {
+    color: blue;
+}
+
+.org_boxes{
+    position: absolute;
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+    margin-bottom: 10px;
+}
+
+.org_boxes .boxx3 {
+    display: flex;
+    position: relative;
+    flex-direction: column;
+    top: 500px;
+    left: 20px;
+    gap: 10px;
+    height: 250px;
+    width: 200px;
+}
+.org_boxes .boxx3 .org_box1{
+    width: 400px;
+    height: 100%;
+    background-color: blue;
+    border-radius: 10px;
+}
+.org_boxes .boxx3 .org_box2{
+    height: 100%;
+    width: 500px;
+    border-radius: 10px;
+    background-color: orange;
+}
+
+.org_box3{
+    position: absolute;
+    display: flex;
+    height: 300px;
+    width:500px;
+    right:0px;
+    bottom:25px;
+    border-radius: 10px;
+    background-color:rgb(250, 6, 250);
+    
+}
+.org_box4{
+    position: absolute;
+    display: flex;
+    height: 150px;
+    width:450px;
+    right:520px;
+    bottom:25px;
+    border-radius: 10px;
+    background-color: rgb(34, 253, 0);
+    
+}
+/*last section*/
+.footer{
+    height: 100vh;
+    width: 100%;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    background-color: white;
+}
+.footer .title{
+    position:relative;
+    font-size: 30px;
+    font-weight: 600;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 150px;
+}
+.diviser{
+    display: flex;
+    justify-content: row;
+    justify-content: space-evenly;
+    align-items: center;
+}
+.diviser .info{
+    display: flex;
+    flex-direction: column;
+    gap:20px;
+    
+}
+.diviser .email{
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+.diviser .email #names, #email{
+    padding: 20px 50px;
+    width: 100%;
+    border-radius: 10px;
+    transition: all 0.1s ease-in-out;
+}
+.diviser .email #message{
+    display: flex;
+    padding: 100px 50px;
+    align-items: flex-start;
+    width: 100%;
+    border-radius: 10px;
+    transition: all 0.1s ease-in-out;   
+}
+.diviser .info .logo{
+    font-size: 30px;
+    font-weight: 600;
+}
+.diviser .info .logo .blue{
+    color: blue;
+}
+.diviser .info p{
+    font-size: 20px;
+    font-weight: 600;
+}
+footer{
+    position: absolute;
+    bottom: 0;
+    right: 600px;
+}
+.diviser .info a{
+    text-decoration: none;
+    color: black;
+}
