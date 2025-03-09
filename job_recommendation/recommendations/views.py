@@ -15,4 +15,4 @@ def recommendation_page(request):
     return render(request, 'recommend.html')
 
 def home(request):
-    return render(request, 'home.html')
+    return render(request, 'index.html')
