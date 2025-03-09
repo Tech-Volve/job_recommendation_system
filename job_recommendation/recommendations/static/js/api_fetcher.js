@@ -6,7 +6,7 @@ document.addEventListener("DOMContentLoaded", () => {
         jobType: '',
         isRemote: false,
         currentPage: 1,
-        jobsPerPage: 10,
+        jobsPerPage: 100,
         isLoading: false,
         retryCount: 0,
         maxRetries: 3,
@@ -23,7 +23,7 @@ document.addEventListener("DOMContentLoaded", () => {
         remoteCheckbox: document.querySelector("#category"),
         searchButton: document.querySelector(".Submit_query"),
         jobContainer: document.querySelector(".jobs"),
-        paginationContainer: document.querySelector(".pagination") // Add a container for pagination
+        paginationContainer: document.querySelector(".pagination")
     };
 
     // Event Listeners setup
@@ -87,107 +87,63 @@ document.addEventListener("DOMContentLoaded", () => {
         state.query = elements.searchInput?.value || 'web';
         state.currentPage = 1;
         state.retryCount = 0;
-        fetchJobs(true);
+        fetchJobs();
     }
 
     // API Functions
-    async function fetchLocalJobs() {
-        try {
-            const response = await fetch('http://127.0.0.1:5000/jobs');
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            return data.map(job => normalizeJobData(job));
-        } catch (error) {
-            console.error('Error fetching local jobs:', error);
-            handleError(error);
-            return [];
-        }
-    }
-
-    async function searchLocalJobs() {
-        const requestData = {
-            location: state.place || 'New York',
-            jobType: state.jobType || 'Full Time',
-            isremote: state.isRemote || false,
-            title: state.query || 'Software Engineer'
-        };
-
-        try {
-            const response = await fetch('http://127.0.0.1:5000/local_search/jobs', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(requestData)
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            return data.map(job => normalizeJobData(job));
-        } catch (error) {
-            console.error('Error searching local jobs:', error);
-            handleError(error);
-            return [];
-        }
-    }
-
-    async function fetchJobs(includeExternal = false) {
+    async function fetchJobs() {
         if (state.isLoading) return;
         
         state.isLoading = true;
         showLoadingState();
-
+    
         try {
-            const localJobs = includeExternal ? await searchLocalJobs() : await fetchLocalJobs();
-            let combinedJobs = [...localJobs];
-
-            if (includeExternal) {
-                const requestData = {
-                    search_term: state.query,
-                    location: state.place || 'mumbai',
-                    results_wanted: 5,
-                    site_name: [
-                        'indeed',
-                        'linkedin',
-                        'zip_recruiter',
-                        'glassdoor'
-                    ],
-                    distance: 50,
-                    job_type: state.jobType.toLowerCase().replace(' ', '') || 'fulltime',
-                    is_remote: state.isRemote,
-                    linkedin_fetch_description: false,
-                    hours_old: 300
-                };
-
-                //Fetch jobs from the external API
-                const externalResponse = await fetch('https://jobs-search-api.p.rapidapi.com/getjobs', {
-                    method: 'POST',
-                    headers: {
-                        'x-rapidapi-key': '8ec0ed2528mshdbc246edfb4c888p1d4a42jsn6450870c3cc0',
-                        'x-rapidapi-host': 'jobs-search-api.p.rapidapi.com',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(requestData)
-                });
-
-                if (externalResponse.status === 429) {
-                    // Handle rate limiting
-                    await handleRateLimit();
-                }
-
-                if (!externalResponse.ok) {
-                    throw new Error(`HTTP error! status: ${externalResponse.status}`);
-                }
-
-                const externalData = await externalResponse.json();
-                const externalJobs = externalData.jobs || [];
-                combinedJobs = [...combinedJobs, ...externalJobs];
+            const requestData = {
+                search_term: state.query,
+                location: state.place || 'mumbai',
+                results_wanted: 60,
+                site_name: [
+                    'indeed',
+                    'linkedin',
+                    'zip_recruiter',
+                    'glassdoor'
+                ],
+                distance: 50,
+                job_type: state.jobType.toLowerCase().replace(' ', '') || 'fulltime',
+                is_remote: state.isRemote,
+                linkedin_fetch_description: false,
+                hours_old: 300
+            };
+            
+            // Fetch jobs from the external API
+            const externalResponse = await fetch('https://jobs-search-api.p.rapidapi.com/getjobs', {
+                method: 'POST',
+                headers: {
+                    'x-rapidapi-key': '8ec0ed2528mshdbc246edfb4c888p1d4a42jsn6450870c3cc0',
+                    'x-rapidapi-host': 'jobs-search-api.p.rapidapi.com',
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(requestData)
+            });
+    
+            if (externalResponse.status === 429) {
+                // Handle rate limiting
+                await handleRateLimit();
+                return;
             }
-
-            displayJobs(combinedJobs);
+    
+            if (!externalResponse.ok) {
+                throw new Error(`HTTP error! status: ${externalResponse.status}`);
+            }
+    
+            const externalData = await externalResponse.json();
+            const jobs = externalData.jobs || [];
+            
+            // Store the jobs in the database
+            await storeJobsInDatabase(jobs);
+            
+            // Display jobs as before
+            displayJobs(jobs);
         } catch (error) {
             console.error('Error fetching jobs:', error);
             handleError(error);
@@ -195,17 +151,6 @@ document.addEventListener("DOMContentLoaded", () => {
             state.isLoading = false;
             hideLoadingState();
         }
-    }
-
-    function normalizeJobData(job) {
-        return {
-            title: job.job_title || job.title,
-            company: job.org_name || job.company,
-            location: job.job_location || job.location,
-            description: job.job_description || job.description,
-            is_remote: job.is_remote === 1 ? true : job.is_remote === 0 ? false : job.is_remote,
-            job_url: job.job_url || '#',
-        };
     }
 
     async function handleRateLimit() {
@@ -220,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
         showMessage(`Rate limit reached. Retrying in ${waitTime/1000} seconds...`);
         
         await new Promise(resolve => setTimeout(resolve, waitTime));
-        await fetchJobs(true);
+        await fetchJobs();
     }
 
     function handleError(error) {
@@ -349,7 +294,7 @@ document.addEventListener("DOMContentLoaded", () => {
             }
             pageButton.addEventListener('click', () => {
                 state.currentPage = i;
-                fetchJobs(true);
+                fetchJobs();
             });
             elements.paginationContainer.appendChild(pageButton);
         }
@@ -411,3 +356,47 @@ document.addEventListener("DOMContentLoaded", () => {
     // Initialize with default search
     fetchJobs();
 });
+
+
+// Add this function to your existing JavaScript
+async function storeJobsInDatabase(jobs) {
+    try {
+        console.log('Attempting to store jobs:', jobs.length);
+        
+        // Add source information to each job
+        const jobsWithSource = jobs.map(job => ({
+            ...job,
+            source: job.source || 'external_api'  // Default source if not provided
+        }));
+        
+        const response = await fetch('/api/store-jobs/', {  // Update with your actual API URL
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCsrfToken()  // Function to get Django CSRF token
+            },
+            body: JSON.stringify({ jobs: jobsWithSource })
+        });
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('Error response:', errorText);
+            throw new Error(`Failed to store jobs: ${response.status}`);
+        }
+        
+        const result = await response.json();
+        console.log(`Successfully stored ${result.jobs?.length || 0} jobs in database`);
+    } catch (error) {
+        console.error('Error storing jobs in database:', error);
+    }
+}
+
+// Function to get CSRF token from cookies
+function getCsrfToken() {
+    const name = 'csrftoken';
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+}
+

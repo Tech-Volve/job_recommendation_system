@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .views import StoreJobsView
 
 urlpatterns = [
     path('recommendations/<str:student_id>/', views.get_recommendations, name='get_recommendations'),
@@ -12,5 +13,6 @@ urlpatterns = [
     path('org/login/', views.org_login, name='org_login'),
     path('org/dashboard/', views.org_dashboard, name='org_dashboard'),
     path('user-dashboard/', views.user_dashboard, name='user-dashboard'),
+    path('api/store-jobs/', StoreJobsView.as_view(), name='store-jobs'),
     
 ]

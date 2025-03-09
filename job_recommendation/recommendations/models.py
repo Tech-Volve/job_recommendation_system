@@ -10,19 +10,24 @@ class Student(models.Model):
     def __str__(self):
         return self.name
 
+
+
 class Job(models.Model):
     title = models.CharField(max_length=255)
-    description = models.TextField()
-    required_skills = models.TextField()
-    source = models.CharField(max_length=255, blank=True, null=True)  # API source
-
+    company = models.CharField(max_length=255)
+    location = models.CharField(max_length=255)
+    description = models.TextField(blank=True, null=True)
+    is_remote = models.BooleanField(default=False)
+    job_url = models.URLField()
+    source = models.CharField(max_length=50)  # To track which site the job came from
+    external_id = models.CharField(max_length=255, blank=True, null=True)  # For deduplication
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        indexes = [
+            models.Index(fields=['external_id']),
+        ]
+        
     def __str__(self):
-        return self.title
-
-class Recommendation(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
-    job = models.ForeignKey(Job, on_delete=models.CASCADE)
-    score = models.FloatField()  # Confidence score
-
-    def __str__(self):
-        return f"{self.student.name} -> {self.job.title}"
+        return f"{self.title} at {self.company}"

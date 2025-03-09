@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Student, Job, Recommendation
+from .models import Student, Job
 import json
 
 class StudentAdmin(admin.ModelAdmin):
@@ -20,17 +20,20 @@ class StudentAdmin(admin.ModelAdmin):
     display_grades.short_description = "Grades"  # Custom column name
 
 
+@admin.register(Job)
 class JobAdmin(admin.ModelAdmin):
-    list_display = ('title', 'source', 'required_skills')
-    search_fields = ('title', 'required_skills', 'source')
-    list_filter = ('source',)
+    list_display = ('title', 'company', 'location', 'is_remote', 'created_at')
+    list_filter = ('is_remote', 'source', 'created_at')
+    search_fields = ('title', 'company', 'location', 'description')
+    date_hierarchy = 'created_at'
 
-class RecommendationAdmin(admin.ModelAdmin):
-    list_display = ('student', 'job', 'score')
-    search_fields = ('student__name', 'job__title')
-    list_filter = ('score',)
-    ordering = ('-score',)
+
+# class RecommendationAdmin(admin.ModelAdmin):
+#     list_display = ('student', 'job', 'score')
+#     search_fields = ('student__name', 'job__title')
+#     list_filter = ('score',)
+#     ordering = ('-score',)
 
 admin.site.register(Student, StudentAdmin)
-admin.site.register(Job, JobAdmin)
-admin.site.register(Recommendation, RecommendationAdmin)
+
+# admin.site.register(Recommendation, RecommendationAdmin)
