@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/Register.css">
+    <title>KoraQuest-Register</title>
+</head>
+<body>
+    <section class="login">
+        <div class="login_section">
+            <h2><span>Kora</span>Quest</h2>
+            <form id="registerForm" class="form">
+                <input type="text" id="orgname" placeholder="Enter Organization Names" required minlength="2" maxlength="50">
+                <input type="email" id="orgemail" placeholder="Enter Organization Email" required>
+                <input type="password" id="orgpassword" placeholder="Enter Password" required 
+                       minlength="8" 
+                        pattern="^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*])[a-zA-Z\d!@#$%^&*]{8,}$"
+                       title="Password must be at least 8 characters, contain uppercase, lowercase, and number">
+                <input type="password" id="orgre_password" placeholder="Re-Enter Password" required>
+                <input type="tel" id="orgphone" placeholder="Enter Phone Number" required pattern="[0-9]{10,12}">
+                <div>
+                </div>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+        <div class="Welcome_text">
+            <h3>Become A Recruiter!</h3>
+        </div>
+    </section>
+    <script src="./js/org-register.js"></script>
+</body>
+</html>

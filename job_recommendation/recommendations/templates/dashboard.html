@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="./css/dashboard_talent.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <title>User-Dashboard</title>
+</head>
+<body>
+    <div class="nav">
+        <h2>Kora<span>Quest</span></h2>
+        <div class="navigation">
+            <a href="./dashboard.html"><i class="fa-solid fa-bell"></i></a>
+            <a><i class="fa-solid fa-user"></i></a>
+        </div>
+    </div>
+    <div class="search">
+        <input type="text" placeholder="Search" class="query_search">
+        <button class="Submit_query"><i class="fa-solid fa-search"></i></button>
+    </div>
+    <div class="filters">
+        <div class="location">
+            <button class="loc_button">Location</button>
+            <div class="places">
+                <p>Mumbai</p>
+                <p>New York</p>
+                <p>Kigali</p>
+                <p>Accra</p>
+                <p>Paris</p>
+                <p>London</p>
+                <p>Abuja</p>
+                <p>Tokyo</p>
+                <p>Berlin</p>
+                <p>Singapore</p>
+                <p>Beijing</p>
+                <p>Washington</p>
+            </div>
+        </div>
+        <div class="job_type">
+            <button class="loc_button2">Job Type</button>
+            <div class="types">
+                <p>Full Time</p>
+                <p>Part Time</p>
+                <p>Contract</p>
+                <p>Internship</p>
+            </div>
+        </div>
+        <div class="category">
+            <input type="checkbox" name="category" id="category" class="remote">
+            <label for="category">Remote</label>
+        </div>
+    </div>
+    <div class="job-container">
+        <div class="jobs">
+            <div class="pagination"></div>
+            <div class="description-modal"></div>
+        </div>
+    </div>
+    <script src="./js/api_fetcher.js"></script>
+</body>
+</html>
