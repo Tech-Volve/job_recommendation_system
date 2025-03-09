@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Job Search</title>
+    <link rel="stylesheet" href="css/jobs.css">
+</head>
+<body>
+    <div class="container">
+        <form id="searchForm" class="search-form">
+            <input type="text" id="searchInput" placeholder="Search jobs...">
+            <select id="jobTypeSelect">
+                <option value="">All Types</option>
+                <option value="Full-time">Full-time</option>
+                <option value="Part-time">Part-time</option>
+                <option value="Contract">Contract</option>
+                <option value="Internship">Internship</option>
+            </select>
+            <input type="text" id="locationInput" placeholder="Location">
+            <button type="submit">Search</button>
+        </form>
+
+        <div id="searchStats" class="search-stats"></div>
+
+        <div class="content-wrapper">
+            <main>
+                <div id="jobsContainer" class="jobs-container">
+                    <!-- Jobs will be displayed here -->
+                </div>
+            </main>
+
+            <aside class="search-history-sidebar">
+                <h3>Recent Searches</h3>
+                <div id="searchHistory">
+                    <!-- Search history will be displayed here -->
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <script src="js/jobs.js"></script>
+</body>
+</html> 

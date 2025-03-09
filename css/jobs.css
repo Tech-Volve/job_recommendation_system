@@ -1,0 +1,152 @@
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.search-form {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.search-form input,
+.search-form select {
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+.search-form button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.content-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 20px;
+}
+
+.job-card {
+    border: 1px solid #ddd;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+}
+
+.job-card h3 {
+    margin: 0 0 10px 0;
+    color: #007bff;
+}
+
+.job-card .company {
+    font-weight: bold;
+    color: #666;
+}
+
+.job-card .location,
+.job-card .type {
+    color: #888;
+    margin: 5px 0;
+}
+
+.job-card .description {
+    margin: 15px 0;
+}
+
+.search-history-sidebar {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 4px;
+}
+
+.search-history-item {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+}
+
+.search-history-item:last-child {
+    border-bottom: none;
+}
+
+.search-stats {
+    margin-bottom: 20px;
+    color: #666;
+}
+
+.job-card .job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.source-tag {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+.source-tag.internal {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.source-tag.external {
+    background-color: #f3e5f5;
+    color: #7b1fa2;
+}
+
+.job-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #eee;
+}
+
+.time-ago {
+    color: #666;
+    font-size: 14px;
+}
+
+.original-post {
+    color: #1976d2;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.original-post:hover {
+    text-decoration: underline;
+}
+
+#pagination {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+#pagination button {
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    background: white;
+    cursor: pointer;
+    border-radius: 4px;
+}
+
+#pagination button.active {
+    background: #007bff;
+    color: white;
+    border-color: #007bff;
+}
+
+#pagination button:hover:not(.active) {
+    background: #f0f0f0;
+} 
