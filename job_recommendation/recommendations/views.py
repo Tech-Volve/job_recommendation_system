@@ -30,4 +30,4 @@ def org_login(request):
     return render (request, 'org/login_organization.html')
 
 def org_dashboard(request):
-    return render (request, 'org/dashboard.html')
+    return render (request, 'org/org-dashboard.html')
