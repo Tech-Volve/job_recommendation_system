@@ -22,3 +22,9 @@ def login(request):
 
 def signup(request):
     return render (request, 'register.html')
+
+def org_signup(request):
+    return render (request, 'org/register-organization.html')
+
+def org_login(request):
+    return render (request, 'org/login_organization.html')

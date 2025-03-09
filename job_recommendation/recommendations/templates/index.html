@@ -12,7 +12,7 @@
     <section class="welcome_page">
         <nav>
             <a><p>How we serve</p></a>
-            <a><p>Job Board</p></a>
+            <a href="{% url 'recommend_page' %}"><p>Get recommendations </p></a>
             <a href="/login"><p>Login</p></a>
             <a href="/signup"><p class="Sign">Sign Up</p></a>
         </nav>
@@ -21,7 +21,7 @@
             <h1>Africa's Best Freelancing Platform</h1>
             <p>Get The Fit For You</p>
             <div class="but">
-                <a href="./login_organization.html"><button class="button1">Hire A Talent</button></a>
+                <a href="{% url 'org_login' %}"><button class="button1">Hire A Talent</button></a>
                 <button class="button2"><a href="/login">Be A Talent</a></button>
             </div>
             <p class="market">Join over <span class="bolding">2000</span> talents and <span class="bolding">500+</span> organization already using <span class="blue bolding">Kora</span><span class="bolding">Quest</span></p>
@@ -95,7 +95,7 @@
                 <button id="sendEmail">Send Email</button>
             </div>
         </div>
-        <footer>Bonaparte Copyright All rights reserved</footer>
+        <footer>Next Volve Copyright All rights reserved</footer>
     </section>
     <!-- <script src="https://apis.google.com/js/api.js"></script> -->
     <!-- <script src="./js/index.js"></script> -->
