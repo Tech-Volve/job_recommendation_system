@@ -4,24 +4,106 @@ import bcrypt
 import re
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
-from flask_session import Session
-from datetime import timedelta  # Import timedelta
 import base64
 import io
 import PyPDF2
 from PyPDF2 import PdfReader
+import requests
+import uuid
+import time
+import json
 
 app = Flask(__name__)
 app.secret_key = 'avellin'
 CORS(app, supports_credentials=True)
 
-# Configure server-side session storage
-app.config['SESSION_TYPE'] = 'filesystem'  # You can also use 'redis', 'memcached', etc.
-app.config['SESSION_PERMANENT'] = True
-app.config['SESSION_USE_SIGNER'] = True
-app.config['SESSION_KEY_PREFIX'] = 'session:'
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(hours=1)  # Set session lifetime
-Session(app)
+# Simpler session configuration
+app.config['SESSION_TYPE'] = 'filesystem'
+
+class Database:
+    def __init__(self, db_file):
+        self.db_file = db_file
+        self.conn = None
+
+    def __enter__(self):
+        self.conn = sqlite3.connect(self.db_file)
+        self.conn.row_factory = sqlite3.Row
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if self.conn:
+            self.conn.close()
+
+    def execute(self, query, params=()):
+        cursor = self.conn.cursor()
+        cursor.execute(query, params)
+        self.conn.commit()
+        return cursor
+
+    def fetchone(self, query, params=()):
+        cursor = self.conn.cursor()
+        cursor.execute(query, params)
+        return cursor.fetchone()
+
+    def fetchall(self, query, params=()):
+        cursor = self.conn.cursor()
+        cursor.execute(query, params)
+        return cursor.fetchall()
+
+# Initialize database and tables at startup
+def init_db():
+    print("Initializing database...")
+    try:
+        with Database('KoraQuest.db') as db:
+            # Create Talent table
+            db.execute('''
+            CREATE TABLE IF NOT EXISTS Talent (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                password TEXT NOT NULL,
+                email TEXT NOT NULL UNIQUE,
+                phone TEXT NOT NULL,
+                resume TEXT NOT NULL
+            )
+            ''')
+            
+            # Create Organization table
+            db.execute('''
+            CREATE TABLE IF NOT EXISTS Organization (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                org_names TEXT NOT NULL UNIQUE,
+                org_password TEXT NOT NULL,
+                org_email TEXT NOT NULL UNIQUE
+            )
+            ''')
+            
+            # Create Jobs table with corrected column names
+            db.execute('''
+            DROP TABLE IF EXISTS Jobs;
+            ''')
+            
+            db.execute('''
+            CREATE TABLE IF NOT EXISTS Jobs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                org_email TEXT,
+                job_title TEXT NOT NULL,
+                job_description TEXT,
+                job_location TEXT,
+                job_type TEXT,
+                is_remote INTEGER,
+                org_name TEXT,  -- Changed from org_names to org_name
+                source TEXT DEFAULT 'created',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                external_job_id TEXT UNIQUE,
+                job_url TEXT
+            )
+            ''')
+        print("Database tables created successfully!")
+    except Exception as e:
+        print(f"Error initializing database: {e}")
+
+# Call initialization
+init_db()
 
 def validate_email(email):
     email_regex = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
@@ -315,22 +397,80 @@ def search_local():
     job_type = data.get('jobType', '').strip()
     is_remote = data.get('isremote', False)
     job_title = data.get('title', '').strip()
-    with Database('KoraQuest.db') as db:
-        jobs = db.fetchall('SELECT * FROM Jobs WHERE job_location = ? AND job_type = ? AND is_remote = ? AND job_title = ?', (job_location, job_type, is_remote, job_title))
-    jobs_list = []
-    for job in jobs:
-        job_dict = {
-            'id': job[0],
-            'org_email': job[1],
-            'job_title': job[2],
-            'job_description': job[3],
-            'job_location': job[4],
-            'job_type': job[5],
-            'is_remote': job[6],
-            'org_name': job[7],
-        }
-        jobs_list.append(job_dict)
-    return jsonify(jobs_list), 200
+    
+    print(f"\nProcessing local job search request:")
+    print(f"Title: {job_title}")
+    print(f"Location: {job_location}")
+    print(f"Job Type: {job_type}")
+    
+    try:
+        # First, fetch from external API and store immediately
+        print("Fetching jobs from external API...")
+        external_jobs = fetch_external_jobs(job_title, job_type, job_location)
+        
+        if external_jobs:
+            print(f"Found {len(external_jobs)} jobs from external API")
+            # Store the fetched jobs FIRST
+            stored_count = store_fetched_jobs(external_jobs)
+            print(f"Stored {stored_count} new jobs in database")
+        else:
+            print("No new jobs found from external API")
+            
+        # Now search in database with better matching
+        with Database('KoraQuest.db') as db:
+            query = """
+                SELECT * FROM Jobs 
+                WHERE 1=1 
+                AND (
+                    LOWER(job_title) LIKE LOWER(?) 
+                    OR LOWER(job_description) LIKE LOWER(?)
+                )
+            """
+            search_term = f"%{job_title}%"
+            params = [search_term, search_term]
+            
+            if job_type:
+                query += " AND LOWER(job_type) LIKE LOWER(?)"
+                params.append(f"%{job_type}%")
+                
+            if job_location:
+                query += " AND LOWER(job_location) LIKE LOWER(?)"
+                params.append(f"%{job_location}%")
+            
+            if is_remote:
+                query += " AND is_remote = 1"
+            
+            # Add ordering by created_at
+            query += " ORDER BY created_at DESC"
+            
+            # Execute the search
+            jobs = db.fetchall(query, tuple(params))
+            print(f"Found {len(jobs)} matching jobs in database")
+            
+            # Format the results
+            jobs_list = []
+            for job in jobs:
+                job_dict = {
+                    'id': job[0],
+                    'org_email': job[1],
+                    'job_title': job[2],
+                    'job_description': job[3],
+                    'job_location': job[4],
+                    'job_type': job[5],
+                    'is_remote': bool(job[6]),
+                    'org_name': job[7],
+                    'source': job[8] if len(job) > 8 else 'created',
+                    'created_at': job[9] if len(job) > 9 else None,
+                    'external_job_id': job[10] if len(job) > 10 else None,
+                    'job_url': job[11] if len(job) > 11 else None
+                }
+                jobs_list.append(job_dict)
+            
+            return jsonify(jobs_list), 200
+            
+    except Exception as e:
+        print(f"Error searching jobs: {e}")
+        return jsonify({'error': 'Failed to search jobs'}), 500
 
 @app.route('/apply/job', methods=['POST'])
 def apply_job():
@@ -376,38 +516,6 @@ def view_applications():
     
     print("Applications:", applications_list)
     return jsonify(applications_list), 200
-
-class Database:
-    def __init__(self, db_file):
-        self.db_file = db_file
-
-    def __enter__(self):
-        self.connection = sqlite3.connect(self.db_file)
-        self.cursor = self.connection.cursor()
-        self.cursor.execute('PRAGMA foreign_keys = ON')
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        if self.connection:
-            self.cursor.close()
-            self.connection.close()
-
-    def execute(self, query, params=()):
-        try:
-            self.cursor.execute(query, params)
-            self.connection.commit()
-            return True
-        except Error as err:
-            print(f"Error: {err}")
-            return False
-
-    def fetchone(self, query, params=()):
-        self.cursor.execute(query, params)
-        return self.cursor.fetchone()
-
-    def fetchall(self, query, params=()):
-        self.cursor.execute(query, params)
-        return self.cursor.fetchall()
 
 class TalentRegister:
     def __init__(self, name, password, email, phone, resume):
@@ -458,76 +566,87 @@ class Jobs:
                 INSERT INTO Jobs (org_email, job_title, job_description, job_location, job_type, is_remote, org_names) VALUES (?, ?, ?, ?, ?, ?, ?)
             ''', (self.org_email, self.job_title, self.job_description, self.job_location, self.job_type, self.is_remote, self.org_names))
 
-def create_tables():
+def store_fetched_jobs(jobs):
+    """Store jobs fetched from external API in the database"""
+    stored_count = 0
+    print(f"\n=== Storing Jobs in Database ===")
+    print(f"Attempting to store {len(jobs)} jobs from external API")
+    
     with Database('KoraQuest.db') as db:
-        db.execute('''
-            CREATE TABLE IF NOT EXISTS Talent (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                name TEXT NOT NULL,
-                password TEXT NOT NULL,
-                email TEXT NOT NULL UNIQUE,
-                phone TEXT NOT NULL,
-                resume TEXT NOT NULL
-            )
-        ''')
-        db.execute('''
-            CREATE TABLE IF NOT EXISTS Organization (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                org_names TEXT NOT NULL UNIQUE,
-                org_password TEXT NOT NULL,
-                org_email TEXT NOT NULL UNIQUE
-            )
-        ''')
-        db.execute('''
-            CREATE TABLE IF NOT EXISTS Jobs (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                org_email TEXT NOT NULL,
-                job_title TEXT NOT NULL,
-                job_description TEXT NOT NULL,
-                job_location TEXT NOT NULL,
-                job_type TEXT NOT NULL,
-                is_remote BOOLEAN NOT NULL,
-                org_names TEXT NOT NULL,
-                source TEXT NOT NULL,  -- 'created' or 'fetched'
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-                external_job_id TEXT,  -- For tracking external job IDs
-                job_url TEXT,          -- Original job posting URL if fetched
-                FOREIGN KEY (org_email) REFERENCES Organization (org_email)
-            )
-        ''')
+        # First, let's verify the database connection
+        try:
+            test_query = "SELECT COUNT(*) FROM Jobs"
+            count = db.fetchone(test_query)[0]
+            print(f"Current number of jobs in database: {count}")
+        except Exception as e:
+            print(f"Error checking database: {e}")
+            return 0
 
-def create_database():
-    try:
-        conn = sqlite3.connect('KoraQuest.db')
-        cursor = conn.cursor()
-
-        # Update Jobs table with new fields
-        cursor.execute('''
-        CREATE TABLE IF NOT EXISTS Jobs (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            org_email TEXT NOT NULL,
-            job_title TEXT NOT NULL,
-            job_description TEXT NOT NULL,
-            job_location TEXT NOT NULL,
-            job_type TEXT NOT NULL,
-            is_remote BOOLEAN NOT NULL,
-            org_names TEXT NOT NULL,
-            source TEXT NOT NULL,  -- 'created' or 'fetched'
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-            external_job_id TEXT,  -- For tracking external job IDs
-            job_url TEXT,          -- Original job posting URL if fetched
-            FOREIGN KEY (org_email) REFERENCES Organization (org_email)
-        )
-        ''')
-
-        conn.commit()
-        print("Database tables updated successfully!")
-
-    except sqlite3.Error as e:
-        print(f"Error updating database: {e}")
-    finally:
-        if conn:
-            conn.close()
+        for job in jobs:
+            try:
+                # Generate a unique ID if none exists
+                external_id = job.get('external_job_id') or job.get('id') or str(uuid.uuid4())
+                
+                print(f"\nProcessing job: {job.get('title')} at {job.get('company')}")
+                # Check if job already exists
+                existing_job = db.fetchone(
+                    """
+                    SELECT id FROM Jobs 
+                    WHERE external_job_id = ? 
+                    OR (
+                        LOWER(job_title) = LOWER(?) 
+                        AND LOWER(job_location) = LOWER(?)
+                        AND org_name = ?
+                    )
+                    """, 
+                    (
+                        external_id,
+                        job.get('title', ''),
+                        job.get('location', ''),
+                        job.get('company', '')
+                    )
+                )
+                
+                if existing_job:
+                    print(f"Job already exists in database with ID: {existing_job[0]}")
+                else:
+                    print("Job is new, inserting into database...")
+                    db.execute('''
+                    INSERT INTO Jobs (
+                        job_title, job_description, job_location, job_type,
+                        is_remote, org_name, source, external_job_id, job_url,
+                        created_at
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                    ''', (
+                        job.get('title', ''),
+                        job.get('description', ''),
+                        job.get('location', ''),
+                        job.get('job_type', 'Full Time'),
+                        1 if job.get('is_remote') else 0,
+                        job.get('company', ''),
+                        'external_api',
+                        external_id,
+                        job.get('job_url', '')
+                    ))
+                    stored_count += 1
+                    print(f"Successfully stored job in database")
+            except Exception as e:
+                print(f"Error storing job: {e}")
+                print(f"Job data that caused error: {job}")
+                continue
+    
+    print(f"\nFinal Results:")
+    print(f"Successfully stored {stored_count} new jobs in database")
+    
+    # Verify final count
+    with Database('KoraQuest.db') as db:
+        try:
+            final_count = db.fetchone("SELECT COUNT(*) FROM Jobs")[0]
+            print(f"Total jobs now in database: {final_count}")
+        except Exception as e:
+            print(f"Error getting final count: {e}")
+    
+    return stored_count
 
 @app.route('/search/jobs', methods=['GET'])
 def search_jobs():
@@ -537,45 +656,58 @@ def search_jobs():
     page = int(request.args.get('page', 1))
     per_page = int(request.args.get('per_page', 10))
     
+    print(f"\nProcessing job search request:")
+    print(f"Query: {search_query}")
+    print(f"Location: {location}")
+    print(f"Job Type: {job_type}")
+    
     try:
-        # First, fetch from external API
+        # First, fetch from external API and store immediately
+        print("Fetching jobs from external API...")
         external_jobs = fetch_external_jobs(search_query, job_type, location)
         
-        # Store the fetched jobs
         if external_jobs:
-            store_fetched_jobs(external_jobs)
+            print(f"Found {len(external_jobs)} jobs from external API")
+            # Store the fetched jobs FIRST
+            stored_count = store_fetched_jobs(external_jobs)
+            print(f"Stored {stored_count} new jobs in database")
+        else:
+            print("No new jobs found from external API")
         
-        # Then proceed with database search as before
+        # Now search in database including the newly stored jobs
         with Database('KoraQuest.db') as db:
-            # Build the base query
-            query = "SELECT * FROM Jobs WHERE 1=1"
-            params = []
-            
-            # Add search conditions
-            if search_query:
-                query += " AND (job_title LIKE ? OR job_description LIKE ?)"
-                search_term = f"%{search_query}%"
-                params.extend([search_term, search_term])
+            # Build the base query with better search conditions
+            query = """
+                SELECT * FROM Jobs 
+                WHERE 1=1 
+                AND (
+                    LOWER(job_title) LIKE LOWER(?) 
+                    OR LOWER(job_description) LIKE LOWER(?)
+                )
+            """
+            search_term = f"%{search_query}%"
+            params = [search_term, search_term]
             
             if job_type:
-                query += " AND job_type = ?"
+                query += " AND LOWER(job_type) = LOWER(?)"
                 params.append(job_type)
                 
             if location:
-                query += " AND job_location LIKE ?"
+                query += " AND LOWER(job_location) LIKE LOWER(?)"
                 params.append(f"%{location}%")
             
+            # Get total count first
+            count_query = "SELECT COUNT(*) FROM (" + query + ")"
+            total_count = db.fetchone(count_query, tuple(params))[0]
+            print(f"Total matching jobs in database: {total_count}")
+            
             # Add ordering and pagination
-            query += " ORDER BY created_at DESC, id DESC"  # Fallback to id if created_at is null
-            query += " LIMIT ? OFFSET ?"
+            query += " ORDER BY created_at DESC, id DESC LIMIT ? OFFSET ?"
             params.extend([per_page, (page - 1) * per_page])
             
             # Execute the search
             jobs = db.fetchall(query, tuple(params))
-            
-            # Get total count for pagination
-            count_query = query.split(' LIMIT')[0].replace('SELECT *', 'SELECT COUNT(*)')
-            total_count = db.fetchone(count_query, tuple(params[:-2]))[0]
+            print(f"Returning {len(jobs)} jobs for current page")
             
             # Format the results
             formatted_jobs = []
@@ -588,7 +720,7 @@ def search_jobs():
                     'job_location': job[4],
                     'job_type': job[5],
                     'is_remote': bool(job[6]),
-                    'org_names': job[7],
+                    'org_name': job[7],
                     'source': job[8] if len(job) > 8 else 'created',
                     'created_at': job[9] if len(job) > 9 else None,
                     'external_job_id': job[10] if len(job) > 10 else None,
@@ -611,55 +743,114 @@ def search_jobs():
 def fetch_external_jobs(query, job_type, location):
     """Fetch jobs from external API and format them properly"""
     try:
-        # Make request to your external API
-        # Process the response
-        # Return formatted jobs data
-        pass
+        print("\n=== Fetching External Jobs ===")
+        print(f"Search Query: {query}")
+        print(f"Job Type: {job_type}")
+        print(f"Location: {location}")
+        
+        # Prepare request data
+        request_data = {
+            'search_term': query or 'software',
+            'location': location or 'mumbai',
+            'results_wanted': 10,  # Reduced to improve response time
+            'site_name': [
+                'indeed',
+                'linkedin'  # Reduced sites to improve reliability
+            ],
+            'distance': 25,  # Reduced distance to improve response time
+            'job_type': job_type.lower().replace(' ', '') if job_type else 'fulltime',
+            'is_remote': False,
+            'linkedin_fetch_description': True,
+            'hours_old': 168  # Last 7 days
+        }
+
+        print("Making API request with data:", request_data)
+        
+        # Make request to external API with retries
+        max_retries = 3
+        retry_delay = 2  # seconds
+        
+        for attempt in range(max_retries):
+            try:
+                response = requests.post(
+                    'https://jobs-search-api.p.rapidapi.com/getjobs',
+                    headers={
+                        'x-rapidapi-key': '8ec0ed2528mshdbc246edfb4c888p1d4a42jsn6450870c3cc0',
+                        'x-rapidapi-host': 'jobs-search-api.p.rapidapi.com',
+                        'Content-Type': 'application/json'
+                    },
+                    json=request_data,
+                    timeout=15  # Reduced timeout
+                )
+                
+                print(f"API Response Status: {response.status_code}")
+                
+                if response.status_code == 429:
+                    print("Rate limit exceeded. Waiting before retry...")
+                    time.sleep(retry_delay * (attempt + 1))
+                    continue
+                
+                if not response.ok:
+                    print(f"API request failed with status {response.status_code}")
+                    print(f"Response content: {response.text}")
+                    time.sleep(retry_delay * (attempt + 1))
+                    continue
+                
+                try:
+                    response_data = response.json()
+                    if not response_data or 'jobs' not in response_data:
+                        print("No jobs found in API response")
+                        return None
+                    
+                    # Format jobs for our database
+                    formatted_jobs = []
+                    for job in response_data['jobs']:
+                        try:
+                            # Skip jobs without required fields
+                            if not job.get('title') or not job.get('company'):
+                                continue
+                                
+                            formatted_job = {
+                                'title': job.get('title', '').strip(),
+                                'description': job.get('description', '').strip(),
+                                'location': job.get('location', '').strip(),
+                                'company': job.get('company', '').strip(),
+                                'job_type': job.get('job_type', 'Full Time').strip(),
+                                'is_remote': bool(job.get('is_remote', False)),
+                                'external_job_id': job.get('job_id') or str(uuid.uuid4()),
+                                'job_url': job.get('url') or job.get('job_url', ''),
+                                'source': 'external_api'
+                            }
+                            
+                            formatted_jobs.append(formatted_job)
+                            print(f"Formatted job: {formatted_job['title']} at {formatted_job['company']}")
+                            
+                        except Exception as e:
+                            print(f"Error formatting job: {e}")
+                            continue
+                    
+                    print(f"Successfully formatted {len(formatted_jobs)} jobs")
+                    return formatted_jobs
+                    
+                except json.JSONDecodeError as e:
+                    print(f"Failed to parse response as JSON: {e}")
+                    print(f"Raw response content: {response.text}")
+                    time.sleep(retry_delay * (attempt + 1))
+                    continue
+
+            except requests.exceptions.RequestException as e:
+                print(f"Request failed (attempt {attempt + 1}/{max_retries}): {e}")
+                if attempt < max_retries - 1:
+                    time.sleep(retry_delay * (attempt + 1))
+                    continue
+                return None
+
+        print("All retry attempts failed")
+        return None
+
     except Exception as e:
         print(f"Error fetching external jobs: {e}")
         return None
 
-# Function to store fetched jobs
-def store_fetched_jobs(jobs_data):
-    """Store fetched jobs in the Jobs table."""
-    try:
-        with Database('KoraQuest.db') as db:
-            for job in jobs_data:
-                # Check if job already exists
-                existing_job = db.fetchone('''
-                    SELECT id FROM Jobs 
-                    WHERE external_job_id = ? OR 
-                          (job_title = ? AND org_names = ? AND job_location = ?)
-                ''', (
-                    job.get('external_job_id'),
-                    job.get('job_title'),
-                    job.get('org_names'),
-                    job.get('job_location')
-                ))
-
-                if not existing_job:
-                    db.execute('''
-                        INSERT INTO Jobs (
-                            org_email, job_title, job_description, job_location,
-                            job_type, is_remote, org_names, source, external_job_id, job_url
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
-                        job.get('org_email', 'external@company.com'),
-                        job.get('job_title'),
-                        job.get('job_description'),
-                        job.get('job_location'),
-                        job.get('job_type'),
-                        1 if job.get('is_remote', False) else 0,  # Convert boolean to INTEGER
-                        job.get('org_names'),
-                        'fetched',
-                        job.get('external_job_id'),
-                        job.get('job_url')
-                    ))
-        return True
-    except Exception as e:
-        print(f"Error storing fetched jobs: {e}")
-        return False
-
 if __name__ == '__main__':
-    create_tables()
     app.run(debug=True)
